@@ -133,10 +133,37 @@ app.post('/tasks', verifyToken, async (req, res) => {
 });
 
 // Get user's tasks
+// Get user's tasks with optional filtering and sorting
 app.get('/tasks', verifyToken, async (req, res) => {
   try {
     const user = await User.findOne({ username: req.user.username });
-    const tasks = await Task.find({ user: user._id });
+
+    const filterOptions = {};
+    const sortOptions = {};
+
+    // Handle filtering
+    if (req.query.filter) {
+      if (req.query.filter === 'completed') {
+        filterOptions.status = 'Completed';
+      } else if (req.query.filter === 'inProgress') {
+        filterOptions.status = 'In Progress';
+      }
+      // Add additional filter options as needed
+    }
+
+    // Handle sorting
+    if (req.query.sort) {
+      if (req.query.sort === 'deadline') {
+        sortOptions.deadline = 1;
+      } else if (req.query.sort === 'priority') {
+        // Add additional sorting options as needed
+      }
+    }
+
+    const tasks = await Task.find({ user: user._id, ...filterOptions })
+      .sort(sortOptions)
+      .exec();
+
     res.status(200).json(tasks);
   } catch (error) {
     res.status(500).send('Internal Server Error');
